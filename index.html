@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Happy Birthday Urvi!</title>
+<meta name="description" content="A tiny isometric room built from pure Three.js primitives. Walk Uvi the bunny around, tap glowing objects to open each section.">
+<!--
+  GM 635: The Kawaii Spatial Diorama
+  HTML/CSS/Vanilla JS template. 3D engine: Three.js r170, bundled locally in js/vendor.
+  Every 3D object is procedurally built from primitives. No model files.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,500;0,700;0,800;0,900;1,900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-mode="room">
+
+<div id="stage" aria-hidden="true"></div>
+<div id="confetti" aria-hidden="true"></div>
+<div class="say" id="mochiSay" role="status" aria-live="polite"><span class="say__key" aria-hidden="true">&#9829;</span><span id="sayTxt"></span></div>
+
+<div class="loader" id="loader" role="status" aria-live="polite">
+  <span class="loader__bun" aria-hidden="true"></span>
+  <span id="loaderText">Fluffing up the room</span>
+</div>
+
+<header class="hud-top">
+  <div class="brand">
+    <span class="brand__mark" aria-hidden="true">
+      <svg viewBox="0 0 32 32" fill="none"><ellipse cx="11" cy="8" rx="3.2" ry="7" fill="#fff" stroke="#1F1B24" stroke-width="1.6"/><ellipse cx="21" cy="8" rx="3.2" ry="7" fill="#fff" stroke="#1F1B24" stroke-width="1.6"/><circle cx="16" cy="20" r="9.5" fill="#fff" stroke="#1F1B24" stroke-width="1.6"/><circle cx="12.5" cy="19" r="1.4" fill="#1F1B24"/><circle cx="19.5" cy="19" r="1.4" fill="#1F1B24"/><ellipse cx="10" cy="22.5" rx="1.8" ry="1.1" fill="#FFD1DC"/><ellipse cx="22" cy="22.5" rx="1.8" ry="1.1" fill="#FFD1DC"/></svg>
+    </span>
+    <span class="brand__txt"><b>Happy Birthday</b><span>A tiny room, just for Urvi</span></span>
+  </div>
+  <div class="hud-actions">
+    <button class="icon-btn" id="soundBtn" type="button" aria-pressed="true" aria-label="Sound">
+      <svg class="ico-on" viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3l5-4v13l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>
+      <svg class="ico-off" viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3l5-4v13l-5-4H4z"/><path d="M16.5 9.5l5 5M21.5 9.5l-5 5"/></svg>
+    </button>
+    <button class="icon-btn" id="resetBtn" type="button" aria-label="Reset the room view">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="hotspots">
+  <button class="hotspot is-hidden" type="button" data-open="hero" data-hotspot="hero"><span class="hotspot__key">1</span><span class="hotspot__txt">Your Reflection</span><span class="hotspot__near" aria-hidden="true"><kbd>Space</kbd><i>Tap Uvi</i> to open</span></button>
+  <button class="hotspot is-hidden" type="button" data-open="gallery" data-hotspot="gallery"><span class="hotspot__key">2</span><span class="hotspot__txt">Our Memories</span><span class="hotspot__near" aria-hidden="true"><kbd>Space</kbd><i>Tap Uvi</i> to open</span></button>
+  <button class="hotspot is-hidden" type="button" data-open="cabinet" data-hotspot="cabinet"><span class="hotspot__key">3</span><span class="hotspot__txt">Cabinet</span><span class="hotspot__near" aria-hidden="true"><kbd>Space</kbd><i>Tap Uvi</i> to open</span></button>
+  <button class="hotspot is-hidden" type="button" data-open="mail" data-hotspot="mail"><span class="hotspot__key">4</span><span class="hotspot__txt">Wish box</span><span class="hotspot__near" aria-hidden="true"><kbd>Space</kbd><i>Tap Uvi</i> to open</span></button>
+</div>
+
+<nav class="dock" aria-label="Room objects">
+  <button class="dock__btn" type="button" data-open="hero"><span class="dock__ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="4"/><path d="M8 3l4 4 4-4" stroke-linecap="round"/></svg></span>TV<kbd>1</kbd></button>
+  <button class="dock__btn" type="button" data-open="gallery"><span class="dock__ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 16l5-5 4 4 3-3 6 6" stroke-linecap="round"/></svg></span>Frame<kbd>2</kbd></button>
+  <button class="dock__btn" type="button" data-open="cabinet"><span class="dock__ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M4 9h16M4 15h16" /><circle cx="12" cy="6" r=".6" fill="#1F1B24"/><circle cx="12" cy="12" r=".6" fill="#1F1B24"/><circle cx="12" cy="18" r=".6" fill="#1F1B24"/></svg></span>Cabinet<kbd>3</kbd></button>
+  <button class="dock__btn" type="button" data-open="mail"><span class="dock__ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2" stroke-linejoin="round"><path d="M5 11a5 5 0 0 1 10 0v7H5z"/><path d="M15 6h2a3 3 0 0 1 3 3v9h-5M10 18v3"/><path d="M17 11V4h3" stroke-linecap="round"/></svg></span>Wish box<kbd>4</kbd></button>
+</nav>
+
+<p class="hint" id="hint"><b>Tap the floor</b> to walk Uvi. <b>Space</b> jumps, and a jump beside an object opens it. Drag to look around, arrows or WASD steer.</p>
+
+<button id="backBtn" type="button"><span class="bb-ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></span>Back to Room <kbd>Esc</kbd></button>
+
+<main>
+  <!-- 01 HERO: revealed from inside the TV screen -->
+  <section class="panel glass" id="panel-hero" aria-labelledby="hero-title" inert>
+    <div data-stagger>
+      <p class="eyebrow">Channel 01 · A special day</p>
+      <h1 class="hero-title panel__head" id="hero-title" tabindex="-1">Happy <span class="puff">Birthday</span> <em id="bdayName">dear Urvi!</em></h1>
+      <p class="hero-lede">Wishing you a day filled with cake, laughter and all the little things that make you smile. Uvi hopped over just to say: Urvi, you are wonderful, and this year is going to be your best one yet.</p>
+      <ul class="hero-facts">
+        <li><i></i>Make a big wish</li>
+        <li style="--f:var(--blush)"><i></i>Eat all the cake</li>
+        <li style="--f:var(--lavender)"><i></i>Celebrate you</li>
+      </ul>
+      <div class="hero-cta">
+        <button class="btn btn--ink" type="button" id="partyBtn" data-go="gallery">See the memories
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 16l5-5 4 4 3-3 6 6"/></svg></button>
+        <button class="btn btn--soft" type="button" data-go="mail">Leave a wish</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 GALLERY: horizontal slider over the rippling WebGL frame -->
+  <section class="panel" id="panel-gallery" aria-labelledby="gal-title" inert>
+    <div class="gal-head glass" style="--ey:var(--lav-ink);--ey-dot:var(--lavender)">
+      <div>
+        <p class="eyebrow">Frame 02 · Memories</p>
+        <h2 class="panel__head" id="gal-title" tabindex="-1">Urvi, in frames</h2>
+        <p>Hover a photo to ripple it into the frame. Drag the row or use the arrows.</p>
+      </div>
+      <div class="gal-ctrl">
+        <button class="icon-btn" type="button" id="galPrev" aria-label="Previous photo"><svg viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <span class="gal-count" id="galCount" aria-live="polite">1 / 24</span>
+        <button class="icon-btn" type="button" id="galNext" aria-label="Next photo"><svg viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+    </div>
+    <ul class="track" id="track">
+      <li class="card" tabindex="0" aria-label="Urvi, photo 1"><figure>
+        <img src="images/urvi/photo-01.jpg" alt="Urvi, photo 1" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag">Photo 01</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 2"><figure>
+        <img src="images/urvi/photo-02.jpg" alt="Urvi, photo 2" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag" style="background:var(--lavender)">Photo 02</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 3"><figure>
+        <img src="images/urvi/photo-03.jpg" alt="Urvi, photo 3" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag">Photo 03</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 4"><figure>
+        <img src="images/urvi/photo-04.jpg" alt="Urvi, photo 4" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag" style="background:var(--lavender)">Photo 04</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 5"><figure>
+        <img src="images/urvi/photo-05.jpg" alt="Urvi, photo 5" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag">Photo 05</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 6"><figure>
+        <img src="images/urvi/photo-06.jpg" alt="Urvi, photo 6" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag" style="background:var(--lavender)">Photo 06</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 7"><figure>
+        <img src="images/urvi/photo-07.jpg" alt="Urvi, photo 7" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag">Photo 07</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 8"><figure>
+        <img src="images/urvi/photo-08.jpg" alt="Urvi, photo 8" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag" style="background:var(--lavender)">Photo 08</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 9"><figure>
+        <img src="images/urvi/photo-09.jpg" alt="Urvi, photo 9" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag">Photo 09</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 10"><figure>
+        <img src="images/urvi/photo-10.jpg" alt="Urvi, photo 10" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag" style="background:var(--lavender)">Photo 10</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 11"><figure>
+        <img src="images/urvi/photo-11.jpg" alt="Urvi, photo 11" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag">Photo 11</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 12"><figure>
+        <img src="images/urvi/photo-12.jpg" alt="Urvi, photo 12" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag" style="background:var(--lavender)">Photo 12</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 13"><figure>
+        <img src="images/urvi/photo-13.jpg" alt="Urvi, photo 13" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag">Photo 13</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 14"><figure>
+        <img src="images/urvi/photo-14.jpg" alt="Urvi, photo 14" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag" style="background:var(--lavender)">Photo 14</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 15"><figure>
+        <img src="images/urvi/photo-15.jpg" alt="Urvi, photo 15" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag">Photo 15</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 16"><figure>
+        <img src="images/urvi/photo-16.jpg" alt="Urvi, photo 16" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag" style="background:var(--lavender)">Photo 16</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 17"><figure>
+        <img src="images/urvi/photo-17.jpg" alt="Urvi, photo 17" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag">Photo 17</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 18"><figure>
+        <img src="images/urvi/photo-18.jpg" alt="Urvi, photo 18" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag" style="background:var(--lavender)">Photo 18</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 19"><figure>
+        <img src="images/urvi/photo-19.jpg" alt="Urvi, photo 19" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag">Photo 19</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 20"><figure>
+        <img src="images/urvi/photo-20.jpg" alt="Urvi, photo 20" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag" style="background:var(--lavender)">Photo 20</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 21"><figure>
+        <img src="images/urvi/photo-21.jpg" alt="Urvi, photo 21" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag">Photo 21</span></figure></li>
+      <li class="card" tabindex="0" aria-label="Urvi, photo 22"><figure>
+        <img src="images/urvi/photo-22.jpg" alt="Urvi, photo 22" width="600" height="750" draggable="false" loading="lazy">
+        <span class="card__tag" style="background:var(--lavender)">Photo 22</span></figure></li>
+      <li class="card card--video" tabindex="0" aria-label="Urvi, video 1"><figure>
+        <img src="images/urvi/video-01.jpg" alt="Urvi, video 1" width="600" height="750" draggable="false">
+        <video src="videos/video-01.mp4" muted loop playsinline preload="none" tabindex="-1"></video>
+        <span class="card__tag" style="background:var(--blush)">Video 01</span></figure></li>
+      <li class="card card--video" tabindex="0" aria-label="Urvi, video 2"><figure>
+        <img src="images/urvi/video-02.jpg" alt="Urvi, video 2" width="600" height="750" draggable="false">
+        <video src="videos/video-02.mp4" muted loop playsinline preload="none" tabindex="-1"></video>
+        <span class="card__tag" style="background:var(--blush)">Video 02</span></figure></li>
+    </ul>
+  </section>
+
+  <!-- 03 CABINET: spring drawers, synced with the 3D drawers -->
+  <section class="panel glass" id="panel-cabinet" aria-labelledby="cab-title" inert>
+    <div data-stagger>
+      <p class="eyebrow">Cabinet 03 · What is inside</p>
+      <h2 class="panel__head" id="cab-title" tabindex="-1">Everything tucked in the drawers</h2>
+      <p>Open a drawer here and uncover the little things that are usually left unsaid.</p>
+      <ul class="drawers" id="drawers">
+        <li class="drawer">
+          <button class="drawer__btn" type="button" aria-expanded="false" aria-controls="dw-0" id="dwb-0" data-drawer="0"><span class="drawer__knob" aria-hidden="true"></span>Things I Don't Say Enough<span class="drawer__meta">The soft stuff</span></button>
+          <div class="drawer__body" id="dw-0" role="region" aria-labelledby="dwb-0"><div class="drawer__inner"><div class="drawer__pop">
+            <p>We may annoy each other, argue over the smallest things, and pretend we don't care — but I hope you always know how important you are to me.</p>
+            <p>No matter how much life changes, you'll always be my brother/sister first, and someone I'll always have a place for.</p>
+            <ul><li>You mean more than you know</li><li>Some feelings are easier to hide than to say.</li></ul>
+          </div></div></div>
+        </li>
+        <li class="drawer">
+          <button class="drawer__btn" type="button" aria-expanded="false" aria-controls="dw-1" id="dwb-1" data-drawer="1"><span class="drawer__knob" aria-hidden="true"></span>Our Kind of Crazy<span class="drawer__meta">The chaos</span></button>
+          <div class="drawer__body" id="dw-1" role="region" aria-labelledby="dwb-1"><div class="drawer__inner"><div class="drawer__pop">
+            <p>Nobody knows how to irritate me quite like you do. Nobody knows how to make me laugh quite like you do either.</p>
+            <p>From stupid arguments to random conversations, inside jokes, childhood memories and all the chaos in between — I'm glad I got you as my sibling.</p>
+            <ul><li>Built-in bestie</li><li>Annoying by nature. Loved by default.</li></ul>
+          </div></div></div>
+        </li>
+        <li class="drawer">
+          <button class="drawer__btn" type="button" aria-expanded="false" aria-controls="dw-2" id="dwb-2" data-drawer="2"><span class="drawer__knob" aria-hidden="true"></span>A Wish for You<span class="drawer__meta">The wish</span></button>
+          <div class="drawer__body" id="dw-2" role="region" aria-labelledby="dwb-2"><div class="drawer__inner"><div class="drawer__pop">
+            <p>I hope you find people who appreciate your heart, opportunities that make you proud, and a life that gives you more reasons to smile.</p>
+            <p>And whenever life gets difficult, I hope you remember that you never have to face it completely alone.</p>
+            <ul><li>I hope life is kind to you</li><li>Wherever life takes you, I'm still in your corner.</li></ul>
+          </div></div></div>
+        </li>
+        <li class="drawer">
+          <button class="drawer__btn" type="button" aria-expanded="false" aria-controls="dw-3" id="dwb-3" data-drawer="3"><span class="drawer__knob" aria-hidden="true"></span>Always Us<span class="drawer__meta">The promise</span></button>
+          <div class="drawer__body" id="dw-3" role="region" aria-labelledby="dwb-3"><div class="drawer__inner"><div class="drawer__pop">
+            <p>We will grow older. We'll get busier. We'll probably argue about completely ridiculous things.</p>
+            <p>But underneath all of that, we'll still be us. <strong>My brother. My sister. My family. Always.</strong></p>
+            <ul><li>One thing that won't change</li><li>Different paths. Same home.</li></ul>
+          </div></div></div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 04 FOOTER: the wish box -->
+  <footer class="panel glass" id="panel-mail" aria-labelledby="mail-title" inert>
+    <div data-stagger>
+      <p class="eyebrow">Wish box 04 · Make it special</p>
+      <h2 class="panel__head" id="mail-title" tabindex="-1">Drop a wish in the wish box</h2>
+      <p>Write a birthday wish for Urvi and tell her who you are to her. Uvi hops when a wish arrives.</p>
+      <div class="form-wrap" id="formWrap">
+        <form class="form" id="mailForm" novalidate action="#">
+          <fieldset class="field">
+            <legend>What am I for you? <small>Pick as many as you like</small></legend>
+            <div class="moods" role="group" aria-label="Pick as many as you like">
+              <label class="mood"><input type="checkbox" name="topic" value="companion"><span>Companion</span></label>
+              <label class="mood"><input type="checkbox" name="topic" value="protector"><span>Protector</span></label>
+              <label class="mood"><input type="checkbox" name="topic" value="lovable"><span>Lovable</span></label>
+              <label class="mood"><input type="checkbox" name="topic" value="honorable"><span>Honorable</span></label>
+              <label class="mood"><input type="checkbox" name="topic" value="caring"><span>Caring</span></label>
+              <label class="mood"><input type="checkbox" name="topic" value="favourite-person"><span>Favourite Person</span></label>
+              <label class="mood"><input type="checkbox" name="topic" value="special-one"><span>Special One</span></label>
+              <label class="mood"><input type="checkbox" name="topic" value="safe-place"><span>Safe Place</span></label>
+              <label class="mood"><input type="checkbox" name="topic" value="happy-place"><span>Happy Place</span></label>
+              <label class="mood"><input type="checkbox" name="topic" value="forever-person"><span>Forever Person</span></label>
+              <label class="mood"><input type="checkbox" name="topic" value="partner-in-crime"><span>Partner in Crime</span></label>
+              <label class="mood"><input type="checkbox" name="topic" value="secret-keeper"><span>Secret Keeper</span></label>
+              <label class="mood"><input type="checkbox" name="topic" value="chaos-buddy"><span>Chaos Buddy</span></label>
+            </div>
+          </fieldset>
+          <div class="field">
+            <label for="f-msg">Make a wish, or tell Urvi what you want her to know</label>
+            <textarea id="f-msg" name="message" required aria-describedby="e-msg"></textarea>
+            <span class="err" id="e-msg" aria-live="polite"></span>
+          </div>
+          <div class="form-row">
+            <button class="btn btn--ink" type="submit">Send wish
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-6 16-3-7z"/></svg></button>
+            <span class="form-note">Urvi will see it on her special day.</span>
+          </div>
+        </form>
+        <div class="sent" id="sent" role="status">
+          <div class="sent__heart" aria-hidden="true"><svg viewBox="0 0 24 24" fill="#1F1B24"><path d="M12 21s-7.5-4.6-9.3-9.2C1.4 8.4 3.6 5 7 5c2 0 3.5 1.1 5 3 1.5-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 16.4 12 21 12 21z"/></svg></div>
+          <h3>Wish sent!</h3>
+          <p>Uvi is doing a happy hop. Your wish is tucked safely in the box for Urvi.</p>
+          <div class="form-row" style="margin-top:16px"><button class="btn btn--soft" type="button" id="againBtn">Write another wish</button></div>
+        </div>
+      </div>
+      <div class="mail-foot">
+        <span>Made with love for Urvi</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Unlisted: Uvi's secret sprout. No hotspot, no dock button, no hint. -->
+  <aside class="panel glass" id="panel-secret" aria-labelledby="secret-title" inert>
+    <div data-stagger>
+      <p class="eyebrow">Secret sprout</p>
+      <h2 class="panel__head" id="secret-title" tabindex="-1">Uvi's hidden sprout</h2>
+      <p>Every room we build hides one small surprise. This one is a sprout that only wakes up when someone hops beside it.</p>
+      <div class="sprout-grow">
+        <ul class="sprout-meter" aria-hidden="true">
+          <li></li><li></li><li></li><span id="sproutCount">0 of 3 drops</span>
+        </ul>
+        <div class="form-row">
+          <button class="btn btn--ink" type="button" id="waterBtn">Water the sprout
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11z"/></svg></button>
+          <span class="form-note" id="sproutNote" aria-live="polite">It needs three drops.</span>
+        </div>
+      </div>
+      <div class="sprout-done" role="status">
+        <div class="petal-row" aria-hidden="true">
+          <i style="--c:#FFC3D3;--r:0"></i><i style="--c:#FFE27A;--r:20"></i><i style="--c:#B4E8BD;--r:40"></i><i style="--c:#DEDAFB;--r:60"></i><i style="--c:#9FD8FF;--r:80"></i>
+        </div>
+        <h3 style="font-weight:900;font-size:24px;letter-spacing:-.02em;margin:8px 0 6px">It bloomed!</h3>
+        <p>Uvi will look after it from here. Keep this one between us.</p>
+      </div>
+    </div>
+  </aside>
+</main>
+
+
+<!-- Three.js r170 subset (MIT), bundled locally so the template works offline -->
+<script src="js/vendor/three-diorama.min.js"></script>
+<!-- UI layer: panels, audio, forms. Works on its own if the 3D engine cannot load. -->
+<script src="js/app.js"></script>
+<!-- Diorama engine: Three.js scene, bunny, raycasting, camera flights -->
+<script src="js/diorama.js"></script>
+</body>
+</html>
