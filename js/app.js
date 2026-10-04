@@ -436,6 +436,8 @@ The Kawaii Spatial Diorama, UI layer (panels, audio, forms, slider).
 
   /* ---------------- Mail form ---------------- */
   var form = $('#mailForm'), wrap = $('#formWrap');
+  /* Paste your Google Apps Script web app URL (ends in /exec) here to send wishes to the sheet. */
+  var SHEET_URL = 'https://script.google.com/macros/s/AKfycbwzkACDDSheLdz2zKhCTipsqO6f4y4RlyGjZl_GeJfozE25GXYXQATWEHHOuelqHJ8A/exec';
   var rules = {
     message: function(v){ return v.trim().length >= 10 ? '' : 'Write at least 10 characters for your wish.'; }
   };
@@ -455,6 +457,11 @@ The Kawaii Spatial Diorama, UI layer (panels, audio, forms, slider).
     var bad = null;
     ['message'].forEach(function(n){ var f = form.elements[n]; if (!check(f) && !bad) bad = f; });
     if (bad) { bad.focus(); return; }
+    if (SHEET_URL) {
+      var roles = $$('input[name="topic"]:checked', form).map(function(c){ return c.value; }).join(', ');
+      var data = new URLSearchParams({ roles: roles, message: form.elements.message.value.trim() });
+      try { fetch(SHEET_URL, { method: 'POST', mode: 'no-cors', body: data }); } catch (err) {}
+    }
     wrap.classList.add('is-sent');
     Sound.swell();
     if (Bus.engine) Bus.engine.celebrate();
